@@ -1,0 +1,8 @@
+# ignore test scripts
+exper.py
+program_6.py
+tempCodeRunnerFile.py
+
+# ignore python cache
+__pycache__/
+*.pyc
