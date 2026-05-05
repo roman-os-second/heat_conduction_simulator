@@ -1,17 +1,19 @@
 import tkinter as tk
 import customtkinter as ctk
 from ui_parameters import open_parameters_window
-from utilts import calc_method, choose_folder, save_name_txt, clear_text
-from plotting import plot_epsilon
+from utils import calc_method, choose_folder, save_name_txt, clear_text
+from plotting import plot_epsilon, plot_temperature_distribution, init_simulation_plot, start_simulation, pause_simulation, stop_simulation
+from data_manager import sim_data, load_data
 
 def create_main_window():
+
     ctk.set_appearance_mode('light')
     window = ctk.CTk()
-    window.geometry("520x490")
+    window.geometry("1010x495")
     window.title("Heat Conduction Simulation 1D")
 
     combobox_frame = ctk.CTkFrame(window)
-    combobox_frame.pack()
+    combobox_frame.grid(row=0, column=0, padx=5, pady=5)
 
     combobox_label = ctk.CTkLabel(combobox_frame, text="Choose method:")
     combobox_label.grid(row=0, column=0)
@@ -46,6 +48,9 @@ def create_main_window():
     clear_button = ctk.CTkButton(combobox_frame, text="Clear text", command=lambda: clear_text(data_text))
     clear_button.grid(row=5, column=0, padx=10, pady=10)
 
+    load_button = ctk.CTkButton(combobox_frame, text="Load file", command=lambda: load_data(sim_data))
+    load_button.grid(row=5, column=1, padx=10, pady=10)
+
     plot_button = ctk.CTkButton(combobox_frame, text="Plot Epsilon", command=plot_epsilon)
     plot_button.grid(row=3, column=1, padx=10, pady=10)
 
@@ -57,7 +62,46 @@ def create_main_window():
                         menu=parameters_menu)
     parameters_menu.add_command(label="Change",
                             command=open_parameters_window)
-    
 
+    tabview = ctk.CTkTabview(window, width=484, height=484)
+    tabview.grid(row=0, column=1, padx=5)
+
+    tab_static = tabview.add("Static Plot")
+    tab_simulation = tabview.add("Simulation")  
+
+    static_frame = ctk.CTkFrame(tab_static)
+    static_frame.pack(fill="both", expand=True)
+
+    # frame for static plot
+    plot_frame_static = ctk.CTkFrame(static_frame, width=450, height=365)
+    plot_frame_static.grid(row=0, column=0, padx=10, pady=10)
+
+    static_plot_button = ctk.CTkButton(static_frame, text="Create plot", command=lambda: plot_temperature_distribution(plot_frame_static))
+    static_plot_button.place(x=10, y=395)
+
+    simulation_frame = ctk.CTkFrame(tab_simulation)
+    simulation_frame.pack(fill="both", expand=True)
+
+    # frame for simulation plot
+    plot_frame_simulation = ctk.CTkFrame(simulation_frame, width=450, height=365)
+    plot_frame_simulation.grid(row=0, column=0, padx=10, pady=10)
+    fig, ax, im, canvas = init_simulation_plot(plot_frame_simulation)
+
+    simulation_run_button = ctk.CTkButton(simulation_frame, text="Run", width=90)
+    simulation_run_button.place(x=10, y=395)
+
+    simulation_pause_button = ctk.CTkButton(simulation_frame, text="Pause", width=90)
+    simulation_pause_button.place(x=120, y=395)
+
+    simulation_stop_button = ctk.CTkButton(simulation_frame, text="Stop", width=90)
+    simulation_stop_button.place(x=230, y=395)
+
+    simulation_speed_entry = ctk.CTkEntry(simulation_frame, width=90)
+    simulation_speed_entry.insert(0, "1")
+    simulation_speed_entry.place(x=340, y=395)
+
+    simulation_run_button.configure(command=lambda: start_simulation(im, canvas, simulation_speed_entry, window))
+    simulation_pause_button.configure(command=pause_simulation)
+    simulation_stop_button.configure(command=lambda: stop_simulation(im, canvas))
 
     window.mainloop()

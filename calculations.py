@@ -37,6 +37,7 @@ def explicit(folder_path, file_name, text_box):
         f"The welding time is {welding_time} seconds\n"
         f"Node number: {params.num_node}\n"
         f"Iteration number: {iteration}\n"
+        "Calculation method: Explicit\n"
         "ITERATION\t\tNODE TEMPERATURE")
     
     np.savetxt(

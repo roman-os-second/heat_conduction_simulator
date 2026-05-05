@@ -16,7 +16,6 @@ def save_name_txt(text_box, entry_box):
 
 def calc_method(combo_box, text_box):
     chosen = combo_box.get()
-    file_name_epsilon = str(params.file_name+"_epsilon.txt")
     file = str(params.file_name+".txt")
 
     if chosen == "Explicit":
