@@ -3,6 +3,9 @@ from tkinter import filedialog
 import numpy as np
 from data_manager import sim_data, sim_state
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from ui_parameters import params
+import time
+from decimal import Decimal
 
 def plot_epsilon():
     chosen_file = filedialog.askopenfilename(title="Choose a file",
@@ -12,7 +15,7 @@ def plot_epsilon():
         with open(chosen_file, 'r') as file:
             lines = file.readlines()
 
-        data = [line.split() for line in lines[5:]]  # skip header and split to columns
+        data = [line.strip().split(",") for line in lines[5:]]  # skip header and split to columns
 
         iterations = [int(row[0]) for row in data]
         epsilon_values = [float(row[1]) for row in data]
@@ -64,7 +67,6 @@ def init_simulation_plot(frame):
         widget.destroy()
 
     fig, ax = plt.subplots(figsize=(5.5, 4.6))
-
     # initial empty heatmap
     heatmap = np.zeros((100, 200))
 
@@ -86,9 +88,11 @@ def init_simulation_plot(frame):
     canvas.draw()
     canvas.get_tk_widget().pack(fill="both", expand=True)
 
+    plt.close(fig)
+
     return fig, ax, im, canvas
 
-def update_simulation(im, canvas, simulation_speed_entry, window):
+def update_simulation(im, canvas, simulation_speed_entry, window, sim_time_entry, weld_temp):
 
     if not sim_state.is_running:
         return
@@ -102,8 +106,23 @@ def update_simulation(im, canvas, simulation_speed_entry, window):
     if sim_state.current_step >= len(sim_data.data):
         sim_state.is_running = False
         return
-
+    
     temperatures = sim_data.get_temperatures(sim_state.current_step)
+
+    # for time rounding in time_entry
+    rounding_num = Decimal(str(params.delta_tau))
+    rounding_digits = abs(rounding_num.as_tuple().exponent)
+
+    # update Time and Weld temp. entry boxes
+    sim_time_entry.configure(state="normal")
+    sim_time_entry.delete(0, "end")
+    sim_time_entry.insert(0, str(round(sim_state.current_step * params.delta_tau, rounding_digits)))
+    sim_time_entry.configure(state='disabled')
+
+    weld_temp.configure(state="normal")
+    weld_temp.delete(0, "end")
+    weld_temp.insert(0, temperatures[int(np.ceil(params.num_node/2))])
+    weld_temp.configure(state='disabled')
 
     # interpolation
     x = np.arange(len(temperatures))
@@ -116,22 +135,46 @@ def update_simulation(im, canvas, simulation_speed_entry, window):
     im.set_data(heatmap)
     canvas.draw()
 
-    sim_state.current_step += 1
+    # sim_state.current_step += 1
 
     # speed control
+    # speed = float(simulation_speed_entry.get())
+    # delay = int(1000 / speed)   # ms
+
+    # elapsed_real = time.time() - sim_state.start_time
+    # sim_time = elapsed_real * speed
+
+    # sim_state.current_step = int(sim_time / params.delta_tau)    
+
+    now = time.time()
+    dt = now - sim_state.last_update_time
+    sim_state.last_update_time = now
+
     speed = float(simulation_speed_entry.get())
-    delay = int(1000 / speed)   # ms
 
-    window.after(delay, lambda: update_simulation(im, canvas, simulation_speed_entry, window))
+    sim_state.sim_time += dt * speed
 
-def start_simulation(im, canvas, simulation_speed_entry, window):
+    sim_state.current_step = int(sim_state.sim_time / params.delta_tau)
+
+    window.after(50, lambda: update_simulation(im, canvas, simulation_speed_entry, window, sim_time_entry, weld_temp))
+
+def start_simulation(im, canvas, simulation_speed_entry, window, sim_time_entry, weld_temp):
     sim_state.is_running = True
-    update_simulation(im, canvas, simulation_speed_entry, window)
+    sim_state.start_time = time.time()
+    sim_state.sim_time = 0
+    sim_state.last_update_time = time.time()
+    update_simulation(im, canvas, simulation_speed_entry, window, sim_time_entry, weld_temp)
 
 def pause_simulation():
     sim_state.is_running = False
 
-def stop_simulation(im, canvas):
+def stop_simulation(im, canvas, sim_time_entry, weld_temp):
+    sim_time_entry.configure(state="normal")
+    sim_time_entry.delete(0, "end")
+    sim_time_entry.configure(state='disabled')
+    weld_temp.configure(state="normal")
+    weld_temp.delete(0, "end")
+    weld_temp.configure(state='disabled')    
     sim_state.is_running = False
     sim_state.current_step = 0      
     empty_heatmap = np.zeros((100, 200))

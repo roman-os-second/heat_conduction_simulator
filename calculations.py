@@ -2,7 +2,7 @@ import numpy as np
 from config import params
 import os
 
-def explicit(folder_path, file_name, text_box):
+def explicit(folder_path, text_box):
     num_middle = int((params.num_node + 1) / 2)      #middle node 
     t_nodes = np.full(params.num_node + 2, params.t_i, dtype=float)    # initialization of node temperatures
     t_nodes[0] = params.t_press
@@ -33,6 +33,8 @@ def explicit(folder_path, file_name, text_box):
 
     welding_time = iteration * params.delta_tau
 
+    file_name = str(params.file_name+".txt")
+
     header_text = (
         f"The welding time is {welding_time} seconds\n"
         f"Node number: {params.num_node}\n"
@@ -48,12 +50,12 @@ def explicit(folder_path, file_name, text_box):
         header=header_text,
         comments="")
 
-    text_box.insert("end", f"\nSimulation completed. Results saved to file"+str(file_name))
+    text_box.insert("end", f"\nSimulation completed. Results saved to file "+str(file_name))
     text_box.insert("end", f"\nWelding time is "+str(welding_time)+" seconds")
     text_box.insert("end", f"\nIteration number is "+str(iteration))
 
 
-def implicit(folder_path, file_name, text_box):
+def implicit(folder_path, text_box):
     num_srod = int((params.num_node + 1) / 2)      #wmiddle node
     t_nodes = np.full(params.num_node + 2, params.t_i, dtype=float)
     t_nodes[0] = params.t_press
@@ -121,6 +123,9 @@ def implicit(folder_path, file_name, text_box):
 
     welding_time = iteration * params.delta_tau
 
+    file_name = str(params.file_name+".txt")
+    file_name_epsilon = str(params.file_name+"_epsilon.txt")
+
     header_text = (
         f"The welding time is {welding_time} seconds\n"
         f"Node number: {params.num_node}\n"
@@ -144,14 +149,14 @@ def implicit(folder_path, file_name, text_box):
         comments="")
     
     np.savetxt(
-        os.path.join(folder_path, file_name+"_epsilon"),
+        os.path.join(folder_path, file_name_epsilon),
         epsilon_results_with_iter,
         delimiter=",",
         fmt=["%d"] + ["%.6f"] * epsilon_results.shape[1],
         header=header_text_epsilon,
         comments="")
     
-    text_box.insert("end", f"\nSimulation completed. Results saved to file"+str(file_name))
+    text_box.insert("end", f"\nSimulation completed. Results saved to file "+str(file_name))
     text_box.insert("end", f"\nWelding time is "+str(welding_time)+" seconds")
     text_box.insert("end", f"\nIteration number is "+str(iteration))
     text_box.insert("end", f"\nIteration number in timestep is "+str(iteration_in_timestep - 1))

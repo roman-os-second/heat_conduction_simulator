@@ -35,6 +35,9 @@ class SimulationState:
     def __init__(self):
         self.current_step = 0
         self.is_running = False
+        self.start_time = None
+        self.sim_time = 0
+        self.last_update_time = None
 
 sim_data = SimulationData()
 sim_state = SimulationState()
